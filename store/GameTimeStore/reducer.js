@@ -13,7 +13,6 @@ const startGameTime = (state, payload) => {
       {
         id: payload.id,
         userID: payload.userID,
-        applicationID: payload.applicationID,
         gameName: payload.gameName,
         startDate: payload.startDate,
         endDate: payload.endDate,
@@ -29,13 +28,11 @@ const endGameTime = (state, payload) => (
 )
 
 const saveGameTime = (state, payload) => {
-  console.log('state', state, 'payload', payload)
   const session = state.find((s) => (
     s.userID === payload.userID && s.gameName === payload.gameName
   ))
   // save gameTime to DB here!
   console.log(`User: ${session.userID} played for ${secondsDiff(session.endDate, session.startDate)}s on ${session.gameName}`)
-  console.log('state ->', state);
 
   return state.filter((s) => s.id !== session.id)
 }

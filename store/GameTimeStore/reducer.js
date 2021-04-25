@@ -1,34 +1,43 @@
 const { GAMETIME_ACTIONS } = require('./constants')
+const { secondsDiff } = require('../../lib/date')
 
 const startGameTime = (state, payload) => {
-  const exists = state.find((session) => payload.userId === session.userId && payload.applicationId === session.applicationId)
+  const exists = state.find((session) => (
+    payload.userID === session.userID
+    && payload.gameName === session.gameName
+  ))
 
   return !exists
     ? [
       ...state,
       {
-        userId: payload.userId,
-        applicationId: payload.applicationId,
+        id: payload.id,
+        userID: payload.userID,
+        applicationID: payload.applicationID,
         gameName: payload.gameName,
-        startDate: utcDate(payload.startDate),
-        endDate: null,
+        startDate: payload.startDate,
+        endDate: payload.endDate,
       },
     ] : state
 }
 
 const endGameTime = (state, payload) => (
-  state.map((session) => session.userId === payload.userId
-    ? { ...session, endDate: utcDate(new Date()) }
+  state.map((session) => session.userID === payload.userID
+    ? { ...session, endDate: payload.endDate }
     : session
   )
 )
 
 const saveGameTime = (state, payload) => {
-  const gameTime = state.find((session) => session.userId === payload.userId)
-  // save gameTime to DB
-  console.log(secondsDiff(gameTime.endDate, gameTime.startDate))
+  console.log('state', state, 'payload', payload)
+  const session = state.find((s) => (
+    s.userID === payload.userID && s.gameName === payload.gameName
+  ))
+  // save gameTime to DB here!
+  console.log(`User: ${session.userID} played for ${secondsDiff(session.endDate, session.startDate)}s on ${session.gameName}`)
+  console.log('state ->', state);
 
-  return state.filter((session) => session.userId !== payload.userId && session)
+  return state.filter((s) => s.id !== session.id)
 }
 
 const reducer = (state, action) => {

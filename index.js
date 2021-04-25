@@ -37,20 +37,18 @@ client.on('presenceUpdate', (_, newMember) => {
     const playingActivities = newMember.activities.filter((activity) => activity.type === 'PLAYING')
     const gamesToAdd = playingActivities.filter((game) => userStore.every((g) => game.name !== g.gameName))
 
-    if (gamesToAdd.length) {
-      gamesToAdd.forEach((game) => {
-        gts.dispatch({
-          type: GAMETIME_ACTIONS.start,
-          payload: {
-            id: v4(),
-            userID: newMember.userID,
-            gameName: game.name,
-            startDate: utcDate(new Date()),
-            endDate: null,
-          },
-        })
+    gamesToAdd.forEach((game) => {
+      gts.dispatch({
+        type: GAMETIME_ACTIONS.start,
+        payload: {
+          id: v4(),
+          userID: newMember.userID,
+          gameName: game.name,
+          startDate: utcDate(new Date()),
+          endDate: null,
+        },
       })
-    }
+    })
 
     const reduceOrphans = userStore.reduce((accu, game) => {
       const exists = newMember.activities.some((g) => game.gameName === g.name)
@@ -68,37 +66,11 @@ client.on('presenceUpdate', (_, newMember) => {
             ? [...accu.orphans, game.id]
             : [game.id]
         }
-    }, {})
+    }, { orphans: [], notOrphans: [] })
 
-    if (reduceOrphans.orphans?.length) {
-      reduceOrphans.orphans
-        .map((id) => userStore.find((game) => id === game.id))
-        .forEach((g) => {
-          gts.dispatch({
-            type: GAMETIME_ACTIONS.end,
-            payload: {
-              userID: g.userID,
-              endDate: utcDate(new Date())
-            }
-          })
-
-          gts.dispatch({
-            type: GAMETIME_ACTIONS.save,
-            payload: {
-              userID: g.userID,
-              gameName: g.gameName,
-            },
-          })
-        })
-    }
-  }
-
-  // user does not play at all
-  if (newMember.activities.every((activity) => activity.type !== 'PLAYING')) {
-    const userStore = gts.getState.filter((game) => game.userID === newMember.userID)
-
-    if (userStore.length) {
-      userStore.forEach((g) => {
+    reduceOrphans.orphans
+      .map((id) => userStore.find((game) => id === game.id))
+      .forEach((g) => {
         gts.dispatch({
           type: GAMETIME_ACTIONS.end,
           payload: {
@@ -115,6 +87,30 @@ client.on('presenceUpdate', (_, newMember) => {
           },
         })
       })
-    }
+  }
+
+  // user does not play at all
+  if (newMember.activities.every((activity) => activity.type !== 'PLAYING')) {
+    const userStore = gts.getState.filter((game) => game.userID === newMember.userID)
+
+    if (!userStore.length) return
+
+    userStore.forEach((g) => {
+      gts.dispatch({
+        type: GAMETIME_ACTIONS.end,
+        payload: {
+          userID: g.userID,
+          endDate: utcDate(new Date())
+        }
+      })
+
+      gts.dispatch({
+        type: GAMETIME_ACTIONS.save,
+        payload: {
+          userID: g.userID,
+          gameName: g.gameName,
+        },
+      })
+    })
   }
 })

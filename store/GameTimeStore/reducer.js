@@ -1,5 +1,6 @@
 const { GAMETIME_ACTIONS } = require('./constants')
-const { secondsDiff } = require('../../lib/date')
+const { minutesDiff } = require('../../lib/date')
+const { save } = require('../../database/game')
 
 const startGameTime = (state, payload) => {
   const exists = state.find((session) => (
@@ -27,12 +28,20 @@ const endGameTime = (state, payload) => (
   )
 )
 
-const saveGameTime = (state, payload) => {
+const saveGameTime = async (state, payload) => {
   const session = state.find((s) => (
     s.userID === payload.userID && s.gameName === payload.gameName
   ))
-  // save gameTime to DB here!
-  console.log(`User: ${session.userID} played for ${secondsDiff(session.endDate, session.startDate)}s on ${session.gameName}`)
+
+  const timeSpent = minutesDiff(session.endDate, session.startDate)
+  console.log(`User: ${session.userID} played for ${timeSpent} minute(s) on ${session.gameName}`)
+
+  if (!timeSpent) {
+    return state.filter((s) => s.id !== session.id)
+  }
+
+  // Side effect over here!
+  await save(payload, timeSpent)
 
   return state.filter((s) => s.id !== session.id)
 }

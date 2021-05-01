@@ -12,8 +12,15 @@ class GameTimeStore {
     return this.state[key]
   }
 
-  dispatch(action) {
-    this.state = this.reducer(this.state, action)
+  async dispatch(action) {
+    const newState = this.reducer(this.state, action)
+
+    if (typeof newState.then === 'function') {
+      this.state = await newState
+      return
+    }
+
+    this.state = newState
   }
 }
 

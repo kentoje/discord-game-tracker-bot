@@ -9,7 +9,7 @@ db.createUser({
   ]
 })
 
-// Trick to create the database gametracker when the containers starts, might not be the appropriate way.
+// Trick to create the gametracker database when the container starts. Might not be the appropriate way.
 db.tracking.insertOne({
   name: 'init'
 })

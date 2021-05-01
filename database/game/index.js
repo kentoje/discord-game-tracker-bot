@@ -1,6 +1,6 @@
 const { MongoClient } = require('mongodb')
 
-const connectionString = `mongodb://${process.env.MONGO_USER}:${process.env.MONGO_PASSWORD}@localhost:27017`
+const connectionString = `mongodb://${process.env.MONGO_USER}:${process.env.MONGO_PASSWORD}@localhost:27017/gametracker`
 
 const save = async (payload, time) => {
   try {

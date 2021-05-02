@@ -2,6 +2,30 @@ const { MongoClient } = require('mongodb')
 
 const connectionString = `mongodb://${process.env.MONGO_USER}:${process.env.MONGO_PASSWORD}@localhost:27017/gametracker`
 
+const getTimeSpentByIds = async (ids) => {
+  try {
+    const mongoClient = new MongoClient(connectionString, {
+      useUnifiedTopology: true,
+    })
+
+    await mongoClient.connect()
+
+    const games = await mongoClient
+      .db()
+      .collection('tracking')
+      .find({ userID: { $in: ids } })
+      .sort({ gameName: 1 })
+      .project({ _id: 0 })
+      .toArray()
+
+    await mongoClient.close()
+
+    return games
+  } catch (err) {
+    console.error(err)
+  }
+}
+
 const getTimeSpent = async () => {
   try {
     const mongoClient = new MongoClient(connectionString, {
@@ -68,4 +92,5 @@ const save = async (payload, time) => {
 module.exports = {
   save,
   getTimeSpent,
+  getTimeSpentByIds,
 }

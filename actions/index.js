@@ -2,8 +2,9 @@ const { GAMETIME_ACTIONS } = require('../store/GameTimeStore/constants')
 const { utcDate } = require('../lib/date')
 const { v4 } = require('uuid')
 const { MESSAGES } = require('./constants')
-const { getTimeSpent } = require('../database/game')
+const { getTimeSpent, getTimeSpentByIds } = require('../database/game')
 const { formatMinutes } = require('../lib/date')
+const { commandWithArgRegExp } = require('../lib/string')
 
 const formatTimeSpent = (res, users) => (
   res
@@ -29,30 +30,51 @@ const usernamesFromIds = (ids, client) => Promise.all(
   ))
 )
 
+const idsFromUsernames = (names, client) => names.map((name) => (
+  client.users.cache.find((user) => user.username === name)?.id || ''
+))
+
 const onMessage = async (msg, gts, client) => {
-  switch (msg.content) {
-    case MESSAGES.yo:
-      msg.reply('Yo le sang de la veine !')
-      break
-    case MESSAGES.state:
-      msg.reply(`State ${JSON.stringify(gts.getState, null, 2)}`)
-      break
-    case MESSAGES.timespent:
-      const res = await getTimeSpent()
-      const users = [...new Set(
-        await usernamesFromIds(res.map(({ userID }) => userID), client)
-      )]
+  if (msg.content === MESSAGES.yo) {
+    msg.reply('Yo le sang de la veine !')
+    return
+  }
 
-      msg.reply(`Such chads!\n${formatTimeSpent(res, users)}`)
-      break
-    case MESSAGES.help:
-      const helpMessage = Object
-        .values(MESSAGES)
-        .reduce((accu, m) => `${accu + m}\n`, 'Only these commands are supported:\n')
+  if (msg.content === MESSAGES.state) {
+    msg.reply(`State ${JSON.stringify(gts.getState, null, 2)}`)
+    return
+  }
 
-      msg.reply(helpMessage)
-      break
-    default:
+  if (msg.content.match(commandWithArgRegExp(MESSAGES.timespent))) {
+    const names = [
+      ...new Set(msg.content.split(' ').slice(1))
+    ]
+    const res = await getTimeSpentByIds(idsFromUsernames(names, client).filter(Boolean))
+    const users = [...new Set(
+      await usernamesFromIds(res.map(({ userID }) => userID), client)
+    )]
+
+    msg.reply(`Such chads!\n${formatTimeSpent(res, users)}`)
+    return
+  }
+
+  if (msg.content === MESSAGES.timespent) {
+    const res = await getTimeSpent()
+    const users = [...new Set(
+      await usernamesFromIds(res.map(({ userID }) => userID), client)
+    )]
+
+    msg.reply(`Such chads!\n${formatTimeSpent(res, users)}`)
+    return
+  }
+
+  if (msg.content === MESSAGES.help) {
+    const helpMessage = Object
+      .values(MESSAGES)
+      .reduce((accu, m) => `${accu + m}\n`, 'Only these commands are supported:\n')
+
+    msg.reply(helpMessage)
+    return
   }
 }
 

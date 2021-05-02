@@ -1,7 +1,7 @@
 const { GAMETIME_ACTIONS } = require('../store/GameTimeStore/constants')
 const { utcDate } = require('../lib/date')
 const { v4 } = require('uuid')
-const { MESSAGES } = require('./constants')
+const { MESSAGES, GAMES_ALLOWED } = require('./constants')
 const { getTimeSpent, getTimeSpentByIds } = require('../database/game')
 const { formatMinutes } = require('../lib/date')
 const { commandWithArgRegExp } = require('../lib/string')
@@ -46,10 +46,12 @@ const onMessage = async (msg, gts, client) => {
   }
 
   if (msg.content.match(commandWithArgRegExp(MESSAGES.timespent))) {
-    const names = [
-      ...new Set(msg.content.split(' ').slice(1))
-    ]
-    const res = await getTimeSpentByIds(idsFromUsernames(names, client).filter(Boolean))
+    const ids = msg.content.match(/[0-9]+/gi)
+
+    if (!ids || !ids.length) return
+
+    const res = await getTimeSpentByIds(ids)
+
     const users = [...new Set(
       await usernamesFromIds(res.map(({ userID }) => userID), client)
     )]
@@ -87,7 +89,10 @@ const onPresenceUpdate = (newMember, gts) => {
   if (newMember.activities.length) {
     const userStore = gts.getState.filter((session) => session.userID === newMember.userID)
     const playingActivities = newMember.activities.filter((activity) => activity.type === 'PLAYING')
-    const gamesToAdd = playingActivities.filter((game) => userStore.every((g) => game.name !== g.gameName))
+    const gamesToAdd = playingActivities.filter((game) => (
+      userStore.every((g) => game.name !== g.gameName)
+      && GAMES_ALLOWED.includes(game.name)
+    ))
 
     gamesToAdd.forEach((game) => {
       gts.dispatch({

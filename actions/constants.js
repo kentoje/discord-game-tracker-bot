@@ -10,6 +10,19 @@ const MESSAGES = {
   timespent: MESSAGE_TIMESPENT,
 }
 
+const GAMES_ALLOWED = [
+  'Battlerite',
+  'Battlerite Royale',
+  'Warcraft Reforged',
+  'Valheim',
+  'Trials Rising',
+  'Quake Live',
+  'Worms W.M.D',
+  'Farming Simulator 19',
+  'Trackmania',
+]
+
 module.exports = {
   MESSAGES,
+  GAMES_ALLOWED,
 }

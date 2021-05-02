@@ -2,21 +2,55 @@ const { GAMETIME_ACTIONS } = require('../store/GameTimeStore/constants')
 const { utcDate } = require('../lib/date')
 const { v4 } = require('uuid')
 const { MESSAGES } = require('./constants')
+const { getTimeSpent } = require('../database/game')
+const { formatMinutes } = require('../lib/date')
 
-const onMessage = (msg, gts) => {
+const formatTimeSpent = (res, users) => (
+  res
+    .map(({ userID, gameName, minutesSpent }) => {
+      const { hours, minutes } = formatMinutes(minutesSpent)
+      const { username } = users.find((user) => user.userID === userID) || ''
+
+      return `${username || 'Unknown user'} played for ${hours} hour(s) and ${minutes} minute(s) on ${gameName}.`
+    })
+    .reduce((accu, str) => `${accu + str}\n`, '')
+)
+
+const usernamesFromIds = (ids, client) => Promise.all(
+  ids.map((id) => (
+    client.users.fetch(id)
+      .then((res) => ({
+        userID: id,
+        username: res.username,
+      }))
+      .catch((err) => {
+        console.error(err)
+      })
+  ))
+)
+
+const onMessage = async (msg, gts, client) => {
   switch (msg.content) {
     case MESSAGES.yo:
-      msg.reply('Yo le sang !')
+      msg.reply('Yo le sang de la veine !')
       break
     case MESSAGES.state:
       msg.reply(`State ${JSON.stringify(gts.getState, null, 2)}`)
       break
+    case MESSAGES.timespent:
+      const res = await getTimeSpent()
+      const users = [...new Set(
+        await usernamesFromIds(res.map(({ userID }) => userID), client)
+      )]
+
+      msg.reply(`Such chads!\n${formatTimeSpent(res, users)}`)
+      break
     case MESSAGES.help:
-      const message = Object
+      const helpMessage = Object
         .values(MESSAGES)
         .reduce((accu, m) => `${accu + m}\n`, 'Only these commands are supported:\n')
 
-      msg.reply(message)
+      msg.reply(helpMessage)
       break
     default:
   }

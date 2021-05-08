@@ -5,18 +5,8 @@ const { MESSAGES, GAMES_ALLOWED } = require('./constants')
 const { getTimeSpent, getTimeSpentByIds } = require('../database/game')
 const { formatMinutes } = require('../lib/date')
 const { commandWithArgRegExp, pick } = require('../lib/string')
-const { MessageEmbed } = require('discord.js')
-
-const formatTimeSpent = (res, users) => (
-  res
-    .map(({ userID, gameName, minutesSpent }) => {
-      const { hours, minutes } = formatMinutes(minutesSpent)
-      const { username } = users.find((user) => user.userID === userID) || ''
-
-      return `${username || 'Unknown user'} played for ${hours} hour(s) and ${minutes} minute(s) on ${gameName}.`
-    })
-    .reduce((accu, str) => `${accu + str}\n`, '')
-)
+const embedMessage = require('../embedMessages')
+const { TEMPLATE } = require('../embedMessages/constants')
 
 const usernamesFromIds = (ids, client) => Promise.all(
   ids.map((id) => (
@@ -30,10 +20,6 @@ const usernamesFromIds = (ids, client) => Promise.all(
       })
   ))
 )
-
-const idsFromUsernames = (names, client) => names.map((name) => (
-  client.users.cache.find((user) => user.username === name)?.id || ''
-))
 
 const onMessage = async (msg, gts, client) => {
   if (msg.content === MESSAGES.yo) {
@@ -85,23 +71,7 @@ const onMessage = async (msg, gts, client) => {
         }
       })
 
-    const timespentUserMessage = new MessageEmbed()
-      .setColor('#0099ff')
-      .setTitle(`${formatData.name}'s personal stats!`)
-      .addFields(
-        {
-          name: 'Player',
-          value: formatData.name,
-        },
-        ...formattedData,
-        {
-          name: 'Total time',
-          value: `${formatData.totalTime.hours} hour(s) and ${formatData.totalTime.minutes} minute(s).`,
-        },
-      )
-      .setTimestamp()
-
-    msg.reply(timespentUserMessage)
+    msg.reply(embedMessage(TEMPLATE.timespentSingle)(formatData, formattedData))
     return
   }
 
@@ -115,16 +85,17 @@ const onMessage = async (msg, gts, client) => {
     const groupByGame = res.reduce((accu, { gameName, minutesSpent }) => ({
       ...accu,
       [gameName]: {
-        totalMinutes: minutesSpent,
+        totalMinutes: accu[gameName].totalMinutes + minutesSpent,
         leaderboard: [...new Set(
           res
+            .filter((game) => game.gameName === gameName)
             .sort((a, b) => b.minutesSpent - a.minutesSpent)
             .map(({ userID }) => pick('username')(users.find((user) => user.userID === userID)))
         )]
       },
-    }), gameNames.reduce((accu, name) => ({ ...accu, [name]: {} }), {}))
+    }), gameNames.reduce((accu, name) => ({ ...accu, [name]: { totalMinutes: 0 } }), {}))
 
-    const formattedData = Object
+    const formattedTime = Object
       .entries(groupByGame)
       .map(([name, { totalMinutes }]) => {
         const time = formatMinutes(totalMinutes)
@@ -137,38 +108,7 @@ const onMessage = async (msg, gts, client) => {
         }
       })
 
-    const timespentMessage = new MessageEmbed()
-      .setColor('#0099ff')
-      .setTitle('Timespent on every game')
-      .addFields(
-        ...formattedData,
-      )
-      .setTimestamp()
-
-    msg.reply(timespentMessage)
-    return
-  }
-
-  if (msg.content === MESSAGES.leaderboard) {
-    const res = await getTimeSpent()
-    const users = await usernamesFromIds([...new Set(res.map(({ userID }) => userID))], client)
-    const gameNames = [...new Set(
-      res.map(({ gameName }) => gameName)
-    )]
-
-    const groupByGame = res.reduce((accu, { gameName, minutesSpent }) => ({
-      ...accu,
-      [gameName]: {
-        totalMinutes: minutesSpent,
-        leaderboard: [...new Set(
-          res
-            .sort((a, b) => b.minutesSpent - a.minutesSpent)
-            .map(({ userID }) => pick('username')(users.find((user) => user.userID === userID)))
-        )]
-      },
-    }), gameNames.reduce((accu, name) => ({ ...accu, [name]: {} }), {}))
-
-    const formattedData = Object
+    const formattedLeaderboard = Object
       .entries(groupByGame)
       .map(([name, { leaderboard }]) => {
         const limitLeaderboard = leaderboard > 3
@@ -185,15 +125,12 @@ const onMessage = async (msg, gts, client) => {
         }
       })
 
-    const leaderboardMessage = new MessageEmbed()
-      .setColor('#0099ff')
-      .setTitle('Leaderboard')
-      .addFields(
-        ...formattedData,
-      )
-      .setTimestamp()
+    const formattedData = [
+      ...formattedTime,
+      ...formattedLeaderboard
+    ]
 
-    msg.reply(leaderboardMessage)
+    msg.reply(embedMessage(TEMPLATE.timespent)(formattedData))
     return
   }
 

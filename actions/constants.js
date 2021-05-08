@@ -2,14 +2,12 @@ const MESSAGE_YO = '!yo'
 const MESSAGE_STATE = '!state'
 const MESSAGE_HELP = '!help'
 const MESSAGE_TIMESPENT = '!timespent'
-const MESSAGE_LEADERBOARD = '!leaderboard'
 
 const MESSAGES = {
   yo: MESSAGE_YO,
   state: MESSAGE_STATE,
   help: MESSAGE_HELP,
   timespent: MESSAGE_TIMESPENT,
-  leaderboard: MESSAGE_LEADERBOARD,
 }
 
 const GAMES_ALLOWED = [

@@ -52,11 +52,56 @@ const onMessage = async (msg, gts, client) => {
     if (!ids || !ids.length) return
 
     const res = await getTimeSpentByIds(ids)
+
+    if (!res || !res.length) return
+
     const users = [...new Set(
       await usernamesFromIds(res.map(({ userID }) => userID), client)
     )]
 
-    msg.reply(`Such chads!\n${formatTimeSpent(res, users)}`)
+    const [user] = users.slice(0, 1)
+    const userGames = res.filter((game) => game.userID === user.userID)
+
+    const formatData = {
+      name: user.username,
+      totalTime: formatMinutes(userGames.reduce((accu, { minutesSpent }) => accu + minutesSpent, 0)),
+      timeOnGames: userGames.reduce((accu, { gameName, minutesSpent }) => (
+        {
+          ...accu,
+          [gameName]: formatMinutes(minutesSpent),
+        }
+      ), userGames.reduce((accu, { gameName }) => ({ ...accu, [gameName]: {} }), {}))
+    }
+
+    const formattedData = Object
+      .entries(formatData.timeOnGames)
+      .map(([name, time]) => {
+        const value = `${time.hours} hour(s) and ${time.minutes} minute(s)!`
+
+        return {
+          name,
+          value,
+          inline: true,
+        }
+      })
+
+    const timespentUserMessage = new MessageEmbed()
+      .setColor('#0099ff')
+      .setTitle(`${formatData.name}'s personal stats!`)
+      .addFields(
+        {
+          name: 'Player',
+          value: formatData.name,
+        },
+        ...formattedData,
+        {
+          name: 'Total time',
+          value: `${formatData.totalTime.hours} hour(s) and ${formatData.totalTime.minutes} minute(s).`,
+        },
+      )
+      .setTimestamp()
+
+    msg.reply(timespentUserMessage)
     return
   }
 
@@ -140,7 +185,7 @@ const onMessage = async (msg, gts, client) => {
         }
       })
 
-    const timespentMessage = new MessageEmbed()
+    const leaderboardMessage = new MessageEmbed()
       .setColor('#0099ff')
       .setTitle('Leaderboard')
       .addFields(
@@ -148,7 +193,7 @@ const onMessage = async (msg, gts, client) => {
       )
       .setTimestamp()
 
-    msg.reply(timespentMessage)
+    msg.reply(leaderboardMessage)
     return
   }
 

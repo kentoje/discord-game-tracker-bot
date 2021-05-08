@@ -4,7 +4,8 @@ const { v4 } = require('uuid')
 const { MESSAGES, GAMES_ALLOWED } = require('./constants')
 const { getTimeSpent, getTimeSpentByIds } = require('../database/game')
 const { formatMinutes } = require('../lib/date')
-const { commandWithArgRegExp } = require('../lib/string')
+const { commandWithArgRegExp, pick } = require('../lib/string')
+const { MessageEmbed } = require('discord.js')
 
 const formatTimeSpent = (res, users) => (
   res
@@ -62,11 +63,46 @@ const onMessage = async (msg, gts, client) => {
 
   if (msg.content === MESSAGES.timespent) {
     const res = await getTimeSpent()
-    const users = [...new Set(
-      await usernamesFromIds(res.map(({ userID }) => userID), client)
+    const users = await usernamesFromIds([...new Set(res.map(({ userID }) => userID))], client)
+    const gameNames = [...new Set(
+      res.map(({ gameName }) => gameName)
     )]
 
-    msg.reply(`Such chads!\n${formatTimeSpent(res, users)}`)
+    const groupByGame = res.reduce((accu, { gameName, minutesSpent }) => ({
+      ...accu,
+      [gameName]: {
+        totalMinutes: minutesSpent,
+        leaderboard: [...new Set(
+          res
+            .sort((a, b) => b.minutesSpent - a.minutesSpent)
+            .map(({ userID }) => pick('username')(users.find((user) => user.userID === userID)))
+        )]
+      },
+    }), gameNames.reduce((accu, name) => ({ ...accu, [name]: {} }), {}))
+
+    const formattedData = Object
+      .entries(groupByGame)
+      .map(([name, { totalMinutes }]) => {
+        const time = formatMinutes(totalMinutes)
+        const value = `${time.hours} hour(s) and ${time.minutes} minute(s) spent on ${name}!`
+
+        return {
+          name,
+          value,
+          inline: true,
+        }
+      })
+
+    const timespentMessage = new MessageEmbed()
+      .setColor('#0099ff')
+      .setTitle('Timespent')
+      .setDescription('Some description here')
+      .addFields(
+        ...formattedData,
+      )
+      .setTimestamp()
+
+    msg.reply(timespentMessage)
     return
   }
 

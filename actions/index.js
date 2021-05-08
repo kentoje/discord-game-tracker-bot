@@ -52,7 +52,6 @@ const onMessage = async (msg, gts, client) => {
     if (!ids || !ids.length) return
 
     const res = await getTimeSpentByIds(ids)
-
     const users = [...new Set(
       await usernamesFromIds(res.map(({ userID }) => userID), client)
     )]
@@ -95,8 +94,55 @@ const onMessage = async (msg, gts, client) => {
 
     const timespentMessage = new MessageEmbed()
       .setColor('#0099ff')
-      .setTitle('Timespent')
-      .setDescription('Some description here')
+      .setTitle('Timespent on every game')
+      .addFields(
+        ...formattedData,
+      )
+      .setTimestamp()
+
+    msg.reply(timespentMessage)
+    return
+  }
+
+  if (msg.content === MESSAGES.leaderboard) {
+    const res = await getTimeSpent()
+    const users = await usernamesFromIds([...new Set(res.map(({ userID }) => userID))], client)
+    const gameNames = [...new Set(
+      res.map(({ gameName }) => gameName)
+    )]
+
+    const groupByGame = res.reduce((accu, { gameName, minutesSpent }) => ({
+      ...accu,
+      [gameName]: {
+        totalMinutes: minutesSpent,
+        leaderboard: [...new Set(
+          res
+            .sort((a, b) => b.minutesSpent - a.minutesSpent)
+            .map(({ userID }) => pick('username')(users.find((user) => user.userID === userID)))
+        )]
+      },
+    }), gameNames.reduce((accu, name) => ({ ...accu, [name]: {} }), {}))
+
+    const formattedData = Object
+      .entries(groupByGame)
+      .map(([name, { leaderboard }]) => {
+        const limitLeaderboard = leaderboard > 3
+          ? leaderboard.slice(0, 3)
+          : leaderboard
+        const value = limitLeaderboard.reduce((accu, name, index) => (
+          accu + `${index + 1}. ${name}\n`
+        ), '')
+
+        return {
+          name,
+          value,
+          inline: true,
+        }
+      })
+
+    const timespentMessage = new MessageEmbed()
+      .setColor('#0099ff')
+      .setTitle('Leaderboard')
       .addFields(
         ...formattedData,
       )

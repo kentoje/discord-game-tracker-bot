@@ -32,7 +32,7 @@ docker-compose up -d
 | Trigger | Description | Example |
 |---|---|---|
 | !yo | Says hi! | !yo |
-| !timespent | Print time spent on every game. | !timespent |
-| !timespent {user} | Print time spent of a given user. | !timespent @Someone |
-| !populate --game {game} --user {userID} --minutes {minutes} | Populate DB with given data. | !populate --game Battlerite --user 123 --minutes 60 |
+| !timespent | Prints time spent on every game. | !timespent |
+| !timespent {user} | Prints time spent of a given user. | !timespent @Someone |
+| !populate --game {game} --user {userID} --minutes {minutes} | Inserts given data in Database. | !populate --game Battlerite --user 123 --minutes 60 |
 | !help | Prints available commands. | !help |

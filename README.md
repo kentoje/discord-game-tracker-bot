@@ -12,10 +12,6 @@ or with Yarn:
 ```bash
 yarn
 ```
-- run docker
-```bash
-docker-compose up -d
-```
 
 ## Running the project in development
 - with NPM:
@@ -25,4 +21,8 @@ npm run start
 - or with Yarn:
 ```bash
 yarn start
+```
+- run Docker
+```bash
+docker-compose up -d
 ```

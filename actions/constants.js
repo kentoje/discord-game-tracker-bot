@@ -21,7 +21,7 @@ const MESSAGES = {
   },
   populate: {
     name: MESSAGE_POPULATE,
-    description: `"!populate --game Battlerite --user 173443180014993409 --minutes 60", adds 60 minutes of game time for the given user on the given game. You have to specify an allowed game.`,
+    description: `"!populate --game Battlerite --user 123 --minutes 60", adds 60 minutes of game time for the given user on the given game. You have to specify an allowed game.`,
     show: false,
   },
 }

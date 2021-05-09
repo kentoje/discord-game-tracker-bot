@@ -21,6 +21,37 @@ const usernamesFromIds = (ids, client) => Promise.all(
   ))
 )
 
+const timespentData = async (client) => {
+  const res = await getTimeSpent()
+  const users = await usernamesFromIds([...new Set(res.map(({ userID }) => userID))], client)
+  const gameNames = [...new Set(
+    res.map(({ gameName }) => gameName)
+  )]
+  const totalTime = formatMinutes(
+    res
+      .map(({ minutesSpent }) => minutesSpent)
+      .reduce((accu, n) => accu + n, 0)
+  )
+
+  const groupByGame = res.reduce((accu, { gameName, minutesSpent }) => ({
+    ...accu,
+    [gameName]: {
+      totalMinutes: accu[gameName].totalMinutes + minutesSpent,
+      leaderboard: [...new Set(
+        res
+          .filter((game) => game.gameName === gameName)
+          .sort((a, b) => b.minutesSpent - a.minutesSpent)
+          .map(({ userID }) => pick('username')(users.find((user) => user.userID === userID)))
+      )]
+    },
+  }), gameNames.reduce((accu, name) => ({ ...accu, [name]: { totalMinutes: 0 } }), {}))
+
+  return {
+    totalTime,
+    groupByGame,
+  }
+}
+
 const onMessage = async (msg, client) => {
   if (msg.content === MESSAGES.yo.name) {
     msg.reply('Yo le sang de la veine !')
@@ -105,29 +136,7 @@ const onMessage = async (msg, client) => {
   }
 
   if (msg.content === MESSAGES.timespent.name) {
-    const res = await getTimeSpent()
-    const users = await usernamesFromIds([...new Set(res.map(({ userID }) => userID))], client)
-    const gameNames = [...new Set(
-      res.map(({ gameName }) => gameName)
-    )]
-    const totalTime = formatMinutes(
-      res
-        .map(({ minutesSpent }) => minutesSpent)
-        .reduce((accu, n) => accu + n, 0)
-    )
-
-    const groupByGame = res.reduce((accu, { gameName, minutesSpent }) => ({
-      ...accu,
-      [gameName]: {
-        totalMinutes: accu[gameName].totalMinutes + minutesSpent,
-        leaderboard: [...new Set(
-          res
-            .filter((game) => game.gameName === gameName)
-            .sort((a, b) => b.minutesSpent - a.minutesSpent)
-            .map(({ userID }) => pick('username')(users.find((user) => user.userID === userID)))
-        )]
-      },
-    }), gameNames.reduce((accu, name) => ({ ...accu, [name]: { totalMinutes: 0 } }), {}))
+    const { groupByGame, totalTime } = await timespentData(client)
 
     const formattedTime = Object
       .entries(groupByGame)
@@ -276,4 +285,5 @@ module.exports = {
   onMessage,
   onReady,
   onPresenceUpdate,
+  timespentData,
 }

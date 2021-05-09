@@ -12,6 +12,12 @@ or with Yarn:
 ```bash
 yarn
 ```
+- setup .env
+```
+BOT_TOKEN=YOUR_TOKEN
+MONGO_USER=gametracker-user
+MONGO_PASSWORD=strongpasswordlol
+```
 
 ## Running the project in development
 - with NPM:

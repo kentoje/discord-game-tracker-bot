@@ -29,7 +29,7 @@ const MESSAGES = {
 const GAMES_ALLOWED = [
   'Battlerite',
   'Battlerite Royale',
-  'Warcraft Reforged',
+  'Warcraft III',
   'Valheim',
   'Trials Rising',
   'Quake Live',

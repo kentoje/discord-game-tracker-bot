@@ -20,7 +20,9 @@ module.exports = (key) => ({
           name: 'Player',
           value: formatData.name,
         },
+        { name: '\u200B', value: '\u200B' },
         ...formattedData,
+        { name: '\u200B', value: '\u200B' },
         {
           name: 'Total time',
           value: `${formatData.totalTime.hours} hour(s) and ${formatData.totalTime.minutes} minute(s) spent!`,

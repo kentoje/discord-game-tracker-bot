@@ -40,5 +40,5 @@ docker-compose up -d
 | !yo                                                         | Says hi!                           | !yo                                                        |
 | !timespent                                                  | Prints time spent on every game.   | !timespent                                                 |
 | !timespent {user}                                           | Prints time spent of a given user. | !timespent @Someone                                        |
-| !populate --game {game} --user {userID} --minutes {minutes} | Inserts given data in Database.    | !populate --game Battlerite_Royale --user 123 --minutes 60 |
+| !populate --game {game} --user {userID} --minutes {minutes} | Inserts given data in Database.    | !populate --game Battlerite Royale --user 123 --minutes 60 |
 | !help                                                       | Prints available commands.         | !help                                                      |

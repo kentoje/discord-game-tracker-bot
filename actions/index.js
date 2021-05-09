@@ -58,16 +58,14 @@ const onMessage = async (msg, client) => {
     return
   }
 
-  if (msg.content.match(populateRegex)) {
-    const exec = populateRegex.exec(msg.content)
-    const obj = exec
-      .groups
-      .args
+  if (msg.content.trim().match(populateRegex)) {
+    const obj = msg.content
       .split('--')
-      .filter(Boolean)
-      .map((str) => str.trim().split(' '))
-      .reduce((accu, [key, value]) => (
-        { ...accu, [key]: key === 'minutes' ? Number(value) : value.replace('_', ' ') }
+      .map((s) => s.trim())
+      .slice(1)
+      .map((s) => s.split(' '))
+      .reduce((accu, [key, ...rest]) => (
+        { ...accu, [key]: key === 'minutes' ? Number(rest[0]) : rest.reduce((accu, s) => accu + `${s} `, '').trim() }
       ), {})
 
     if (!GAMES_ALLOWED.includes(obj.game)) {
@@ -167,7 +165,9 @@ const onMessage = async (msg, client) => {
 
     const formattedData = [
       { name: 'Global time spent!', value: `${totalTime.hours} hour(s) and ${totalTime.minutes} minute(s).` },
+      { name: '\u200B', value: '\u200B' },
       ...formattedTime,
+      { name: '\u200B', value: '\u200B' },
       ...formattedLeaderboard,
     ]
 

@@ -63,14 +63,11 @@ const onMessage = async (msg, client) => {
     const obj = exec
       .groups
       .args
-      .split(' ')
-      .reduce((accu, str, index, arr) => (
-        index % 2 === 0
-         ? {
-           ...accu,
-           [str.replace(/--/, '')]: str === '--minutes' ? Number(arr[++index]) : arr[++index],
-         }
-         : { ...accu }
+      .split('--')
+      .filter(Boolean)
+      .map((str) => str.trim().split(' '))
+      .reduce((accu, [key, value]) => (
+        { ...accu, [key]: key === 'minutes' ? Number(value) : value.replace('_', ' ') }
       ), {})
 
     if (!GAMES_ALLOWED.includes(obj.game)) {

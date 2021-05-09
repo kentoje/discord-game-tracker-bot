@@ -5,7 +5,7 @@ module.exports = (key) => ({
   [TEMPLATE.timespent]: (formattedData) => (
     new MessageEmbed()
       .setColor('#0099ff')
-      .setTitle('Timespent and TOP 3 players on each game!')
+      .setTitle('Global stats!')
       .addFields(
         ...formattedData,
       )
@@ -23,7 +23,7 @@ module.exports = (key) => ({
         ...formattedData,
         {
           name: 'Total time',
-          value: `${formatData.totalTime.hours} hour(s) and ${formatData.totalTime.minutes} minute(s).`,
+          value: `${formatData.totalTime.hours} hour(s) and ${formatData.totalTime.minutes} minute(s) spent!`,
         },
       )
       .setTimestamp()

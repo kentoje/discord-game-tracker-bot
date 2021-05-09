@@ -89,8 +89,51 @@ const save = async (payload, time) => {
   }
 }
 
+const populate = async (obj) => {
+  let res
+
+  try {
+    const mongoClient = new MongoClient(connectionString, {
+      useUnifiedTopology: true,
+    })
+
+    await mongoClient.connect()
+
+    const game = await mongoClient.db().collection('tracking').findOne({
+      userID: obj.user,
+      gameName: obj.game,
+    })
+
+    !game
+      ? (
+        res = await mongoClient.db().collection('tracking').insertOne({
+          userID: obj.user,
+          gameName: obj.game,
+          minutesSpent: obj.minutes,
+        })
+      )
+      : (
+        res = await mongoClient.db().collection('tracking').updateOne(
+          {
+            userID: obj.user,
+            gameName: obj.game,
+          },
+          {
+            $set: { minutesSpent: game.minutesSpent + obj.minutes }
+          },
+        )
+      )
+
+      return res.result.ok
+
+  } catch (err) {
+    console.error(err)
+  }
+}
+
 module.exports = {
   save,
   getTimeSpent,
   getTimeSpentByIds,
+  populate,
 }

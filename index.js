@@ -21,7 +21,7 @@ const run = () => {
   client.on('ready', onReady)
 
   client.on('message', (msg) => {
-    onMessage(msg, gts, client)
+    onMessage(msg, client)
   })
 
   client.on('presenceUpdate', (_, newMember) => {

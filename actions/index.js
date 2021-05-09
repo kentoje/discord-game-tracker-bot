@@ -2,9 +2,9 @@ const { GAMETIME_ACTIONS } = require('../store/GameTimeStore/constants')
 const { utcDate } = require('../lib/date')
 const { v4 } = require('uuid')
 const { MESSAGES, GAMES_ALLOWED } = require('./constants')
-const { getTimeSpent, getTimeSpentByIds } = require('../database/game')
+const { getTimeSpent, getTimeSpentByIds, populate } = require('../database/game')
 const { formatMinutes } = require('../lib/date')
-const { commandWithArgRegExp, pick } = require('../lib/string')
+const { commandWithArgRegExp, populateRegex, pick } = require('../lib/string')
 const embedMessage = require('../embedMessages')
 const { TEMPLATE } = require('../embedMessages/constants')
 
@@ -21,14 +21,43 @@ const usernamesFromIds = (ids, client) => Promise.all(
   ))
 )
 
-const onMessage = async (msg, gts, client) => {
+const onMessage = async (msg, client) => {
   if (msg.content === MESSAGES.yo) {
     msg.reply('Yo le sang de la veine !')
     return
   }
 
-  if (msg.content === MESSAGES.state) {
-    msg.reply(`State ${JSON.stringify(gts.getState, null, 2)}`)
+  if (msg.content.match(populateRegex)) {
+    const exec = populateRegex.exec(msg.content)
+    const obj = exec
+      .groups
+      .args
+      .split(' ')
+      .reduce((accu, str, index, arr) => (
+        index % 2 === 0
+         ? {
+           ...accu,
+           [str.replace(/--/, '')]: str === '--minutes' ? Number(arr[++index]) : arr[++index],
+         }
+         : { ...accu }
+      ), {})
+
+    if (!GAMES_ALLOWED.includes(obj.game)) {
+      msg.reply(`The given game "${obj.game}" is not allowed... Allowed games are: ${GAMES_ALLOWED.reduce((accu, s) => accu + `${s}\n`, '\n')}`)
+      return
+    }
+
+    const isValide = Object
+      .values(obj)
+      .every(Boolean)
+
+    if (!isValide) return
+
+    const populateMessage = await populate(obj)
+      ? `Added ${JSON.stringify(obj, null, 2)}`
+      : `Could not add the object to the database. An error occurred...`
+
+    msg.reply(populateMessage)
     return
   }
 
@@ -62,7 +91,7 @@ const onMessage = async (msg, gts, client) => {
     const formattedData = Object
       .entries(formatData.timeOnGames)
       .map(([name, time]) => {
-        const value = `${time.hours} hour(s) and ${time.minutes} minute(s)!`
+        const value = `${time.hours} hour(s) and ${time.minutes} minute(s).`
 
         return {
           name,
@@ -81,6 +110,11 @@ const onMessage = async (msg, gts, client) => {
     const gameNames = [...new Set(
       res.map(({ gameName }) => gameName)
     )]
+    const totalTime = formatMinutes(
+      res
+        .map(({ minutesSpent }) => minutesSpent)
+        .reduce((accu, n) => accu + n, 0)
+    )
 
     const groupByGame = res.reduce((accu, { gameName, minutesSpent }) => ({
       ...accu,
@@ -99,7 +133,7 @@ const onMessage = async (msg, gts, client) => {
       .entries(groupByGame)
       .map(([name, { totalMinutes }]) => {
         const time = formatMinutes(totalMinutes)
-        const value = `${time.hours} hour(s) and ${time.minutes} minute(s) spent on ${name}!`
+        const value = `${time.hours} hour(s) and ${time.minutes} minute(s).`
 
         return {
           name,
@@ -126,8 +160,9 @@ const onMessage = async (msg, gts, client) => {
       })
 
     const formattedData = [
+      { name: 'Global time spent!', value: `${totalTime.hours} hour(s) and ${totalTime.minutes} minute(s).` },
       ...formattedTime,
-      ...formattedLeaderboard
+      ...formattedLeaderboard,
     ]
 
     msg.reply(embedMessage(TEMPLATE.timespent)(formattedData))

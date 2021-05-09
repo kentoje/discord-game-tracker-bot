@@ -34,7 +34,6 @@ const saveGameTime = async (state, payload) => {
   ))
 
   const timeSpent = minutesDiff(session.endDate, session.startDate)
-  console.log(`User: ${session.userID} played for ${timeSpent} minute(s) on ${session.gameName}`)
 
   if (!timeSpent) {
     return state.filter((s) => s.id !== session.id)

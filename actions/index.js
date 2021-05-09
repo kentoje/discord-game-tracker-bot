@@ -22,7 +22,7 @@ const usernamesFromIds = (ids, client) => Promise.all(
 )
 
 const onMessage = async (msg, client) => {
-  if (msg.content === MESSAGES.yo) {
+  if (msg.content === MESSAGES.yo.name) {
     msg.reply('Yo le sang de la veine !')
     return
   }
@@ -61,7 +61,7 @@ const onMessage = async (msg, client) => {
     return
   }
 
-  if (msg.content.match(commandWithArgRegExp(MESSAGES.timespent))) {
+  if (msg.content.match(commandWithArgRegExp(MESSAGES.timespent.name))) {
     const ids = msg.content.match(/[0-9]+/gi)
 
     if (!ids || !ids.length) return
@@ -104,7 +104,7 @@ const onMessage = async (msg, client) => {
     return
   }
 
-  if (msg.content === MESSAGES.timespent) {
+  if (msg.content === MESSAGES.timespent.name) {
     const res = await getTimeSpent()
     const users = await usernamesFromIds([...new Set(res.map(({ userID }) => userID))], client)
     const gameNames = [...new Set(
@@ -169,10 +169,11 @@ const onMessage = async (msg, client) => {
     return
   }
 
-  if (msg.content === MESSAGES.help) {
+  if (msg.content === MESSAGES.help.name) {
     const helpMessage = Object
       .values(MESSAGES)
-      .reduce((accu, m) => `${accu + m}\n`, 'Only these commands are supported:\n')
+      .reduce((accu, m) => m.show ? `${accu + m.name}: ${m.description}\n` : accu,
+      'Only these commands are supported:\n')
 
     msg.reply(helpMessage)
     return

@@ -4,10 +4,26 @@ const MESSAGE_TIMESPENT = '!timespent'
 const MESSAGE_POPULATE = '!populate'
 
 const MESSAGES = {
-  yo: MESSAGE_YO,
-  help: MESSAGE_HELP,
-  timespent: MESSAGE_TIMESPENT,
-  populate: MESSAGE_POPULATE,
+  yo: {
+    name: MESSAGE_YO,
+    description: 'Say hi!',
+    show: true,
+  },
+  help: {
+    name: MESSAGE_HELP,
+    description: 'Display every commands.',
+    show: true,
+  },
+  timespent: {
+    name: MESSAGE_TIMESPENT,
+    description: `\n\t"!timespent", displays global statistics.\n\t"!timespent @Macron", displays Macron's statistics, if he exists on the current server.`,
+    show: true,
+  },
+  populate: {
+    name: MESSAGE_POPULATE,
+    description: `"!populate --game Battlerite --user 173443180014993409 --minutes 60", adds 60 minutes of game time for the given user on the given game. You have to specify an allowed game.`,
+    show: false,
+  },
 }
 
 const GAMES_ALLOWED = [

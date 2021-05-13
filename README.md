@@ -35,10 +35,11 @@ docker-compose up -d
 
 ## Available BOT commands
 
-| Trigger                                                     | Description                        | Example                                                    |
-| ----------------------------------------------------------- | ---------------------------------- | ---------------------------------------------------------- |
-| !yo                                                         | Says hi!                           | !yo                                                        |
-| !timespent                                                  | Prints time spent on every game.   | !timespent                                                 |
-| !timespent {user}                                           | Prints time spent of a given user. | !timespent @Someone                                        |
-| !populate --game {game} --user {userID} --minutes {minutes} | Inserts given data in Database.    | !populate --game Battlerite Royale --user 123 --minutes 60 |
-| !help                                                       | Prints available commands.         | !help                                                      |
+| Trigger                                                     | Description                     | Example                                                    |
+| ----------------------------------------------------------- | ------------------------------- | ---------------------------------------------------------- |
+| !yo                                                         | Says hi!                        | !yo                                                        |
+| !timespent                                                  | Prints current user's stats.    | !timespent                                                 |
+| !timespent {user}                                           | Prints stats of a given user.   | !timespent @Someone                                        |
+| !timespent_global                                           | Prints stats of all users.      | !timespent_global                                          |
+| !populate --game {game} --user {userID} --minutes {minutes} | Inserts given data in Database. | !populate --game Battlerite Royale --user 123 --minutes 60 |
+| !help                                                       | Prints available commands.      | !help                                                      |

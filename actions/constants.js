@@ -1,22 +1,28 @@
 const MESSAGE_YO = '!yo'
 const MESSAGE_HELP = '!help'
 const MESSAGE_TIMESPENT = '!timespent'
+const MESSAGE_TIMESPENT_GLOBAL = '!timespent_global'
 const MESSAGE_POPULATE = '!populate'
 
 const MESSAGES = {
   yo: {
     name: MESSAGE_YO,
-    description: 'Say hi!',
+    description: 'greeting!',
     show: true,
   },
   help: {
     name: MESSAGE_HELP,
-    description: 'Display every commands.',
+    description: 'displays every commands.',
     show: true,
   },
   timespent: {
     name: MESSAGE_TIMESPENT,
-    description: `\n\t"!timespent", displays global statistics.\n\t"!timespent @Macron", displays Macron's statistics, if he exists on the current server.`,
+    description: `\n\t"!timespent", displays current user's statistics.\n\t"!timespent @Macron", displays Macron's statistics, if he exists on the current server.`,
+    show: true,
+  },
+  timespentGlobal: {
+    name: MESSAGE_TIMESPENT_GLOBAL,
+    description: `displays global statistics.`,
     show: true,
   },
   populate: {

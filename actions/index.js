@@ -54,7 +54,7 @@ const timespentData = async (client) => {
 
 const onMessage = async (msg, client) => {
   if (msg.content === MESSAGES.yo.name) {
-    msg.reply('Yo le sang de la veine !')
+    msg.reply(`Yo, ${msg.author.username} le sang de la veine !`)
     return
   }
 
@@ -90,11 +90,17 @@ const onMessage = async (msg, client) => {
   if (msg.content.match(commandWithArgRegExp(MESSAGES.timespent.name))) {
     const ids = msg.content.match(/[0-9]+/gi)
 
-    if (!ids || !ids.length) return
+    if (!ids || !ids.length) {
+      msg.reply('IDs do not match...')
+      return
+    }
 
     const res = await getTimeSpentByIds(ids)
 
-    if (!res || !res.length) return
+    if (!res || !res.length) {
+      msg.reply('Nothing in database...')
+      return
+    }
 
     const users = [...new Set(
       await usernamesFromIds(res.map(({ userID }) => userID), client)
@@ -131,6 +137,48 @@ const onMessage = async (msg, client) => {
   }
 
   if (msg.content === MESSAGES.timespent.name) {
+    const res = await getTimeSpentByIds([msg.author.id])
+
+    if (!res || !res.length) {
+      msg.reply('Nothing in database...')
+      return
+    }
+
+    const users = [...new Set(
+      await usernamesFromIds(res.map(({ userID }) => userID), client)
+    )]
+
+    const [user] = users.slice(0, 1)
+    const userGames = res.filter((game) => game.userID === user.userID)
+
+    const formatData = {
+      name: user.username,
+      totalTime: formatMinutes(userGames.reduce((accu, { minutesSpent }) => accu + minutesSpent, 0)),
+      timeOnGames: userGames.reduce((accu, { gameName, minutesSpent }) => (
+        {
+          ...accu,
+          [gameName]: formatMinutes(minutesSpent),
+        }
+      ), userGames.reduce((accu, { gameName }) => ({ ...accu, [gameName]: {} }), {}))
+    }
+
+    const formattedData = Object
+      .entries(formatData.timeOnGames)
+      .map(([name, time]) => {
+        const value = `${time.hours} hour(s) and ${time.minutes} minute(s).`
+
+        return {
+          name,
+          value,
+          inline: true,
+        }
+      })
+
+    msg.reply(embedMessage(TEMPLATE.timespentSingle)(formatData, formattedData))
+    return
+  }
+
+  if (msg.content === MESSAGES.timespentGlobal.name) {
     const { groupByGame, totalTime } = await timespentData(client)
 
     const formattedTime = Object
